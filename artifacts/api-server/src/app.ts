@@ -6,6 +6,8 @@ import connectPgSimple from "connect-pg-simple";
 import { pool as pgPool } from "@workspace/db";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import path from "node:path";
+import { existsSync } from "node:fs";
 
 const PgSession = connectPgSimple(session);
 
@@ -56,5 +58,17 @@ app.use(
 );
 
 app.use("/api", router);
+
+// In production, serve the frontend static files
+if (process.env.NODE_ENV === "production") {
+  const staticDir = path.resolve(process.cwd(), "artifacts/travel-agency/dist/public");
+  if (existsSync(staticDir)) {
+    app.use(express.static(staticDir));
+    // SPA fallback — serve index.html for all non-API routes (Express 5 compatible)
+    app.get("/{*path}", (_req, res) => {
+      res.sendFile(path.join(staticDir, "index.html"));
+    });
+  }
+}
 
 export default app;
