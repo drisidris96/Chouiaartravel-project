@@ -93,10 +93,6 @@ export default function Login() {
       toast({ variant: "destructive", title: t("login.passwordMin") });
       return;
     }
-    if (!captchaToken) {
-      toast({ variant: "destructive", title: t("login.captchaRequired") || "يرجى إكمال التحقق من الكابتشا" });
-      return;
-    }
     setIsLoading(true);
     try {
       const res = await fetch(`${API}/auth/register`, {
@@ -108,20 +104,15 @@ export default function Login() {
           email: registerForm.email,
           phone: registerForm.phone || undefined,
           password: registerForm.password,
-          captchaToken,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      setVerifyEmail(registerForm.email);
-      setDisplayedCode(data.verificationCode || "");
-      setMode("verify");
-      toast({ title: t("login.accountCreated"), description: t("login.accountCreatedDesc") });
+      toast({ title: t("login.accountCreated") || "تم إنشاء الحساب بنجاح", description: t("login.accountCreatedDesc") || "مرحباً بك في وكالة شويعر!" });
+      window.location.href = "/";
     } catch (err: any) {
       toast({ variant: "destructive", title: t("login.createFailed"), description: err.message });
-      captchaRef.current?.reset();
-      setCaptchaToken(null);
     } finally {
       setIsLoading(false);
     }

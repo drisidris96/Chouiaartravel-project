@@ -80,7 +80,6 @@ router.post("/register", async (req, res) => {
     }
 
     const hashed = hashPassword(password);
-    const verificationCode = generateVerificationCode();
 
     const [user] = await db
       .insert(usersTable)
@@ -90,15 +89,17 @@ router.post("/register", async (req, res) => {
         name,
         phone: phone || null,
         role: "user",
-        verified: false,
-        verificationCode,
+        verified: true,
+        verificationCode: null,
       })
       .returning();
 
+    // Create session immediately after registration
+    (req.session as any).userId = user.id;
+
     res.status(201).json({
-      message: "تم إنشاء الحساب. أدخل رمز التفعيل لتأكيد حسابك",
-      verificationCode,
-      email: user.email,
+      message: "تم إنشاء الحساب بنجاح",
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, verified: true },
     });
   } catch (err) {
     req.log.error({ err }, "Register error");
