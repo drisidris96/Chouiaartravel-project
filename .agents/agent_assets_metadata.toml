@@ -6,3 +6,9 @@ id = "g1QAotLkAzOjZSXSGlGwj"
 uri = "file://chouiaar-travel-agency.tar.gz"
 type = "unspecified"
 title = "جميع ملفات الموقع — chouiaar-travel-agency.tar.gz (96 MB)"
+
+[[outputs]]
+id = "y36MB_OCW_hYOSVbNqDxq"
+uri = "file://finel_project_chouiaartravel.zip"
+type = "unspecified"
+title = "finel project chouiaartravel.zip"
