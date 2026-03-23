@@ -3,11 +3,9 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { MapPin, Calendar, Users, Star } from "lucide-react";
 import type { Trip } from "@workspace/api-client-react";
 import { useLanguage } from "@/i18n/LanguageContext";
-import { useCurrency } from "@/i18n/CurrencyContext";
 
 export function TripCard({ trip }: { trip: Trip }) {
   const { t } = useLanguage();
-  const { formatPrice } = useCurrency();
 
   return (
     <Link href={`/trips/${trip.id}`}>
@@ -63,17 +61,7 @@ export function TripCard({ trip }: { trip: Trip }) {
           </p>
         </CardContent>
         
-        <CardFooter className="border-t border-border/50 pt-4 pb-4 flex justify-between items-center bg-muted/20">
-          {trip.price ? (
-            <div className="flex flex-col items-start">
-              <span className="text-xs text-muted-foreground">ابتداءً من</span>
-              <span className="text-lg font-extrabold text-primary leading-tight" dir="ltr">
-                {formatPrice(trip.price)}
-              </span>
-            </div>
-          ) : (
-            <div />
-          )}
+        <CardFooter className="border-t border-border/50 pt-4 pb-4 flex justify-center items-center bg-muted/20">
           <div className="text-primary font-semibold text-sm group-hover:underline underline-offset-4 decoration-2">
             {t("tripCard.viewDetails")}
           </div>
