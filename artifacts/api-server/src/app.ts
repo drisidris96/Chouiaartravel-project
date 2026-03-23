@@ -2,8 +2,12 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool as pgPool } from "@workspace/db";
 import router from "./routes";
 import { logger } from "./lib/logger";
+
+const PgSession = connectPgSimple(session);
 
 const app: Express = express();
 
@@ -30,14 +34,22 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.set("trust proxy", 1);
+
 app.use(
   session({
+    store: new PgSession({
+      pool: pgPool,
+      tableName: "session",
+      createTableIfMissing: false,
+    }),
     secret: process.env.SESSION_SECRET ?? "travel-agency-secret-key-2024",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: false,
       httpOnly: true,
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   }),
