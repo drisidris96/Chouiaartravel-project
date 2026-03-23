@@ -7,6 +7,8 @@ import { ServiceRequestModal } from "@/components/ServiceRequestModal";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage, LanguageSwitcher } from "@/i18n/LanguageContext";
 import { ClockBar } from "./ClockBar";
+import { NotificationBell } from "@/components/NotificationBell";
+import { CurrencyConverter } from "@/components/CurrencyConverter";
 
 export function Navbar() {
   const [location, setLocation] = useLocation();
@@ -18,45 +20,35 @@ export function Navbar() {
   const requireAuth = (e: React.MouseEvent, href: string) => {
     if (!user) {
       e.preventDefault();
-      toast({
-        variant: "destructive",
-        title: t("nav.mustLogin"),
-        description: t("nav.mustLoginDesc"),
-      });
+      toast({ variant: "destructive", title: t("nav.mustLogin"), description: t("nav.mustLoginDesc") });
       setLocation("/login");
     }
   };
 
   const links = [
     { href: "/",             label: t("nav.home"),         icon: Home },
-    { href: "/visas",        label: t("nav.visas"),        icon: FileText },
+    { href: "/visas",        label: "التأشيرات",           icon: FileText },
     { href: "/umrah",        label: t("nav.umrah"),        icon: Star },
     { href: "/reservations", label: t("nav.reservations"), icon: CalendarCheck },
     { href: "/contact",      label: t("nav.contact"),      icon: Phone },
   ];
+
+  const isVisasActive = location.startsWith("/visas");
 
   return (
     <>
       <header className="sticky top-0 z-50 w-full shadow-md">
         <ClockBar />
         <div className="bg-background/95 backdrop-blur border-b border-border/40">
-          <div className="container mx-auto px-4 h-20 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
-              <img
-                src="/images/logo-chouiaar.jpg"
-                alt={t("nav.agencyName")}
-                className="h-14 w-auto rounded-xl object-contain border border-border/30 group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="hidden sm:flex flex-col leading-tight">
-                <span className="text-xl md:text-2xl font-extrabold text-black" style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}>{t("nav.agencyName")}</span>
-                <span className="text-xs md:text-sm font-semibold text-black/50 tracking-[0.15em]" style={{ fontFamily: "'Inter', sans-serif" }}>{t("nav.agencyNameEn")}</span>
-              </div>
-            </Link>
+          <div className="container mx-auto px-4 h-20 flex items-center justify-between gap-4">
 
-            <div className="flex items-center gap-2">
+            {/* Auth buttons — LEFT in RTL */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <CurrencyConverter />
               <LanguageSwitcher />
               {user ? (
                 <>
+                  <NotificationBell isAdmin={user.role === "admin"} />
                   {user.role === "admin" && (
                     <Link href="/admin">
                       <Button variant={location.startsWith("/admin") ? "default" : "outline"} size="sm" className="gap-1.5 rounded-full">
@@ -94,10 +86,7 @@ export function Navbar() {
                     </Button>
                   </Link>
                   <Link href="/login?tab=register">
-                    <Button
-                      size="sm"
-                      className="rounded-full font-semibold px-4 gap-1.5"
-                    >
+                    <Button size="sm" className="rounded-full font-semibold px-4 gap-1.5">
                       <UserPlus className="w-4 h-4" />
                       <span className="hidden sm:inline">{t("nav.register")}</span>
                     </Button>
@@ -105,24 +94,35 @@ export function Navbar() {
                 </>
               )}
             </div>
+
+            {/* Logo + Name — RIGHT in RTL */}
+            <Link href="/" className="flex items-center gap-3 group flex-shrink-0">
+              <div className="hidden sm:flex flex-col leading-tight items-end">
+                <span className="text-xl md:text-2xl font-extrabold text-black" style={{ fontFamily: "'Amiri', 'Noto Naskh Arabic', serif" }}>{t("nav.agencyName")}</span>
+                <span className="text-xs md:text-sm font-semibold text-black/50 tracking-[0.15em]" style={{ fontFamily: "'Inter', sans-serif" }}>{t("nav.agencyNameEn")}</span>
+              </div>
+              <img
+                src="/images/logo-chouiaar.jpg"
+                alt={t("nav.agencyName")}
+                className="h-14 w-auto rounded-xl object-contain border border-border/30 group-hover:scale-105 transition-transform duration-300"
+              />
+            </Link>
+
           </div>
         </div>
 
+        {/* Nav Links Bar */}
         <div className="bg-background border-b border-border/40 overflow-x-auto">
           <div className="flex items-center justify-center gap-2 px-4 py-2.5 min-w-max mx-auto">
             {links.map((link) => {
               const Icon = link.icon;
-              const active = location === link.href;
+              const active = link.href === "/visas" ? isVisasActive : location === link.href;
               return (
                 <button
                   key={link.href}
                   onClick={() => {
-                    if (!user) {
-                      toast({
-                        variant: "destructive",
-                        title: t("nav.mustLogin"),
-                        description: t("nav.mustLoginDesc"),
-                      });
+                    if (link.href !== "/" && link.href !== "/visas" && link.href !== "/umrah" && link.href !== "/contact" && !user) {
+                      toast({ variant: "destructive", title: t("nav.mustLogin"), description: t("nav.mustLoginDesc") });
                       setLocation("/login");
                       return;
                     }
@@ -142,10 +142,7 @@ export function Navbar() {
 
             <button
               onClick={(e) => {
-                if (!user) {
-                  requireAuth(e, "/login");
-                  return;
-                }
+                if (!user) { requireAuth(e, "/login"); return; }
                 setModalOpen(true);
               }}
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 border bg-gradient-to-l from-violet-500 to-primary text-white border-transparent shadow-md shadow-primary/20 hover:opacity-90 hover:scale-105"

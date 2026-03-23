@@ -14,7 +14,10 @@ import Home from "@/pages/Home";
 import Trips from "@/pages/Trips";
 import TripDetails from "@/pages/TripDetails";
 import Login from "@/pages/Login";
+import VisasHub from "@/pages/VisasHub";
 import Visas from "@/pages/Visas";
+import VisasRegular from "@/pages/VisasRegular";
+import VisasAppointments from "@/pages/VisasAppointments";
 import Umrah from "@/pages/Umrah";
 import Contact from "@/pages/Contact";
 import Reservations from "@/pages/Reservations";
@@ -125,7 +128,10 @@ function Router() {
           <Route path="/" component={Home} />
           <Route path="/trips" component={Trips} />
           <Route path="/trips/:id" component={TripDetails} />
-          <Route path="/visas" component={Visas} />
+          <Route path="/visas" component={VisasHub} />
+          <Route path="/visas/electronic" component={Visas} />
+          <Route path="/visas/regular" component={VisasRegular} />
+          <Route path="/visas/appointments" component={VisasAppointments} />
           <Route path="/umrah" component={Umrah} />
           <Route path="/contact" component={Contact} />
           <Route path="/reservations" component={Reservations} />
