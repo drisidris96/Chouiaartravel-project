@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "g1QAotLkAzOjZSXSGlGwj"
+uri = "file://chouiaar-travel-agency.tar.gz"
+type = "unspecified"
+title = "جميع ملفات الموقع — chouiaar-travel-agency.tar.gz (96 MB)"
