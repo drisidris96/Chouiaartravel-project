@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Travel Agency API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: trips
+    description: Trip management
+  - name: bookings
+    description: Booking management
+  - name: admin
+    description: Admin operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,357 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify:
+    post:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Verify email with code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRequest"
+      responses:
+        "200":
+          description: Verification successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/resend-code:
+    post:
+      operationId: resendCode
+      tags: [auth]
+      summary: Resend verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResendCodeRequest"
+      responses:
+        "200":
+          description: Code resent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trips:
+    get:
+      operationId: getTrips
+      tags: [trips]
+      summary: Get all trips
+      parameters:
+        - name: destination
+          in: query
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: featured
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trip"
+    post:
+      operationId: createTrip
+      tags: [trips, admin]
+      summary: Create a new trip (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTripRequest"
+      responses:
+        "201":
+          description: Trip created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "403":
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /trips/{id}:
+    get:
+      operationId: getTripById
+      tags: [trips]
+      summary: Get trip by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "404":
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateTrip
+      tags: [trips, admin]
+      summary: Update trip (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTripRequest"
+      responses:
+        "200":
+          description: Trip updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+    delete:
+      operationId: deleteTrip
+      tags: [trips, admin]
+      summary: Delete trip (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Trip deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /bookings:
+    get:
+      operationId: getBookings
+      tags: [bookings]
+      summary: Get bookings (admin gets all, user gets own)
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Create a booking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBookingRequest"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /bookings/{id}:
+    get:
+      operationId: getBookingById
+      tags: [bookings]
+      summary: Get booking by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+    patch:
+      operationId: updateBookingStatus
+      tags: [bookings, admin]
+      summary: Update booking status (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBookingStatusRequest"
+      responses:
+        "200":
+          description: Booking updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+    delete:
+      operationId: deleteBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard statistics
+      responses:
+        "200":
+          description: Admin statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +391,330 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, user]
+        verified:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - email
+        - name
+        - role
+        - createdAt
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+      required:
+        - email
+        - password
+        - name
+
+    VerifyRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        code:
+          type: string
+      required:
+        - email
+        - code
+
+    ResendCodeRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+        - email
+
+    VerificationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        verificationCode:
+          type: string
+        email:
+          type: string
+      required:
+        - message
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required:
+        - user
+        - message
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        destination:
+          type: string
+        country:
+          type: string
+        imageUrl:
+          type: string
+        price:
+          type: number
+        duration:
+          type: integer
+          description: Duration in days
+        maxCapacity:
+          type: integer
+        availableSpots:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        featured:
+          type: boolean
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        includes:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - destination
+        - country
+        - price
+        - duration
+        - maxCapacity
+        - availableSpots
+        - startDate
+        - endDate
+        - featured
+        - rating
+        - reviewCount
+        - includes
+        - createdAt
+
+    CreateTripRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        destination:
+          type: string
+        country:
+          type: string
+        imageUrl:
+          type: string
+        price:
+          type: number
+        duration:
+          type: integer
+        maxCapacity:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        featured:
+          type: boolean
+        includes:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - description
+        - destination
+        - country
+        - price
+        - duration
+        - maxCapacity
+        - startDate
+        - endDate
+        - featured
+        - includes
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        tripId:
+          type: integer
+        userId:
+          type: integer
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+        guestPhone:
+          type: string
+        numberOfPeople:
+          type: integer
+        totalPrice:
+          type: number
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        specialRequests:
+          type: string
+        trip:
+          $ref: "#/components/schemas/Trip"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - tripId
+        - guestName
+        - guestEmail
+        - guestPhone
+        - numberOfPeople
+        - totalPrice
+        - status
+        - createdAt
+
+    CreateBookingRequest:
+      type: object
+      properties:
+        tripId:
+          type: integer
+        guestName:
+          type: string
+        guestEmail:
+          type: string
+          format: email
+        guestPhone:
+          type: string
+        numberOfPeople:
+          type: integer
+          minimum: 1
+        specialRequests:
+          type: string
+      required:
+        - tripId
+        - guestName
+        - guestEmail
+        - guestPhone
+        - numberOfPeople
+
+    UpdateBookingStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+      required:
+        - status
+
+    AdminStats:
+      type: object
+      properties:
+        totalTrips:
+          type: integer
+        totalBookings:
+          type: integer
+        pendingBookings:
+          type: integer
+        confirmedBookings:
+          type: integer
+        totalRevenue:
+          type: number
+        popularDestinations:
+          type: array
+          items:
+            type: object
+            properties:
+              destination:
+                type: string
+              count:
+                type: integer
+            required:
+              - destination
+              - count
+      required:
+        - totalTrips
+        - totalBookings
+        - pendingBookings
+        - confirmedBookings
+        - totalRevenue
+        - popularDestinations

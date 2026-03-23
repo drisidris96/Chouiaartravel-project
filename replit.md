@@ -16,12 +16,23 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Project: Chouiaar Travel Agency
+
+Full-stack multilingual (Arabic/French/English, RTL) travel agency website built with React + Vite frontend and Express API backend.
+
+**Features:** Trip browsing/booking, visa requests, hotel/flight reservations, Umrah services, service requests, admin dashboard.
+
+**Auth:** Session-based (express-session). Admin: `admin@chouiaar.com` / `admin123`. Password hashed with SHA256 + salt.
+
+**Design:** Gold (#primary: 45 93% 47%) + Deep Navy (#secondary: 215 100% 20%) theme. Fonts: Tajawal (sans) + Amiri (serif). RTL support.
+
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server (port 8080)
+│   └── travel-agency/      # React + Vite frontend (port 19981)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
