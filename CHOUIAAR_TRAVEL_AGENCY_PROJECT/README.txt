@@ -45,7 +45,7 @@ CHOUIAAR_TRAVEL_AGENCY_PROJECT/
   SESSION_SECRET=اختر-مفتاح-سري-طويل-هنا
   GMAIL_APP_PASSWORD=ypeyimiyfbgirthc
   NODE_ENV=production
-  PORT=8080
+  PORT=8084
 
 وفي مجلد artifacts/travel-agency/ أنشئ .env:
 
@@ -78,6 +78,7 @@ CHOUIAAR_TRAVEL_AGENCY_PROJECT/
    pnpm --filter @workspace/api-server run start
 
    (الخادم يخدم الواجهة الأمامية تلقائياً من مجلد travel-agency/dist)
+   الموقع سيكون متاحاً على: http://YOUR_VPS_IP:8084
 
 -------------------------------------------------
 بيانات الدخول الافتراضية للمشرف
