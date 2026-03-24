@@ -2,19 +2,36 @@ import nodemailer from "nodemailer";
 import { logger } from "./logger";
 import { LOGO_B64 } from "./logo-b64";
 
+// Namecheap Private Email (primary — sent from official domain)
+const NAMECHEAP_USER = "noreply@chouiaartravel.com";
+const NAMECHEAP_PASS = process.env.NAMECHEAP_EMAIL_PASSWORD;
+
+// Gmail fallback
 const GMAIL_USER = "chouiaartravelagency@gmail.com";
 const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD;
 
 function createTransport() {
-  if (!GMAIL_PASS) {
-    logger.warn("GMAIL_APP_PASSWORD not set — email sending disabled");
-    return null;
+  if (NAMECHEAP_PASS) {
+    return nodemailer.createTransport({
+      host: "mail.privateemail.com",
+      port: 587,
+      secure: false,
+      auth: { user: NAMECHEAP_USER, pass: NAMECHEAP_PASS },
+    });
   }
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: GMAIL_USER, pass: GMAIL_PASS },
-  });
+  if (GMAIL_PASS) {
+    logger.warn("Using Gmail fallback for email sending");
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: GMAIL_USER, pass: GMAIL_PASS },
+    });
+  }
+  logger.warn("No email credentials set — email sending disabled");
+  return null;
 }
+
+const SENDER_NAME = "وكالة شويعر للسياحة والأسفار";
+const SENDER_EMAIL = NAMECHEAP_PASS ? NAMECHEAP_USER : GMAIL_USER;
 
 export async function sendPasswordResetEmail(toEmail: string, code: string): Promise<boolean> {
   const transport = createTransport();
@@ -25,8 +42,8 @@ export async function sendPasswordResetEmail(toEmail: string, code: string): Pro
 
   try {
     await transport.sendMail({
-      from: `"وكالة شويعر للسياحة والأسفار" <${GMAIL_USER}>`,
-      replyTo: GMAIL_USER,
+      from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+      replyTo: SENDER_EMAIL,
       to: toEmail,
       subject: "رمز استعادة كلمة المرور — وكالة شويعر للسياحة",
       headers: {
