@@ -142,7 +142,23 @@ export async function sendPasswordResetEmail(toEmail: string, code: string): Pro
   }
 }
 
-export async function sendMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
+export interface MailAttachment {
+  name: string;
+  type: string;
+  data: string; // base64
+}
+
+export async function sendMail({
+  to,
+  subject,
+  html,
+  attachments = [],
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: MailAttachment[];
+}): Promise<boolean> {
   const transport = createTransport();
   if (!transport) {
     logger.warn({ to }, "Email not sent (no credentials configured)");
@@ -155,8 +171,13 @@ export async function sendMail({ to, subject, html }: { to: string; subject: str
       to,
       subject,
       html,
+      attachments: attachments.map((f) => ({
+        filename: f.name,
+        content: Buffer.from(f.data, "base64"),
+        contentType: f.type,
+      })),
     });
-    logger.info({ to, subject }, "Email sent");
+    logger.info({ to, subject, attachmentCount: attachments.length }, "Email sent");
     return true;
   } catch (err) {
     logger.error({ err, to }, "Failed to send email");

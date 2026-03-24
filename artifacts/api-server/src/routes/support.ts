@@ -86,7 +86,7 @@ router.post("/", async (req, res) => {
             </tr>
             ${attachmentHtml}
           </table>
-          ${validatedAttachments.length > 0 ? `<p style="margin-top:16px;color:#6b7280;font-size:12px;">⚠️ تحتوي الرسالة على ${validatedAttachments.length} مرفق، راجع لوحة الأدمين لتنزيلها.</p>` : ""}
+          ${validatedAttachments.length > 0 ? `<p style="margin-top:16px;color:#0369a1;font-size:12px;background:#e0f2fe;padding:10px 14px;border-radius:8px;">📎 تم إرفاق ${validatedAttachments.length} ملف مع هذا البريد مباشرةً.</p>` : ""}
         </div>
         <div style="background: #e0f2fe; padding: 14px 28px; border: 1px solid #bae6fd; border-top: none; border-radius: 0 0 12px 12px; font-size: 12px; color: #0369a1; text-align: center;">
           يُرجى الرد في أقرب وقت ممكن على العميل — وكالة شويعر للسياحة والأسفار
@@ -98,6 +98,7 @@ router.post("/", async (req, res) => {
       to: "chouiaartravelagency@gmail.com",
       subject: `📩 دعم جديد من: ${name}${validatedAttachments.length > 0 ? ` (${validatedAttachments.length} مرفق)` : ""}`,
       html: htmlBody,
+      attachments: validatedAttachments,
     });
 
     res.status(200).json({ message: "تم إرسال رسالتك بنجاح. سنتواصل معك قريباً." });
