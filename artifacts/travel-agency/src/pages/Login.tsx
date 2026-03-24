@@ -240,7 +240,7 @@ export default function Login() {
     }`;
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-16 px-4 relative">
+    <div className="min-h-[85vh] flex flex-col items-center justify-center py-16 px-4 relative">
       <div className="absolute inset-0 bg-[url('/images/login-bg.jpg')] bg-cover bg-center" />
       <div className="absolute inset-0 bg-white/70 backdrop-blur-sm" />
       <Card className="w-full max-w-md shadow-2xl border-none overflow-hidden rounded-3xl relative z-10">
