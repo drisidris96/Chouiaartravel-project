@@ -1,8 +1,12 @@
 import { Router, type IRouter } from "express";
+import { db, supportMessagesTable } from "@workspace/db";
 import { sendMail } from "../lib/email";
+import { eq } from "drizzle-orm";
+import { requireAdmin } from "../middleware/requireAdmin";
 
 const router: IRouter = Router();
 
+// POST /api/support — public: submit a support message
 router.post("/", async (req, res) => {
   try {
     const { name, phone, email, message } = req.body;
@@ -11,6 +15,15 @@ router.post("/", async (req, res) => {
       return;
     }
 
+    // Save to database
+    await db.insert(supportMessagesTable).values({
+      name,
+      phone: phone || null,
+      email: email || null,
+      message,
+    });
+
+    // Also send email notification to admin
     const htmlBody = `
       <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #1a3a5c, #2a5298); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -53,6 +66,35 @@ router.post("/", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Support message error");
     res.status(500).json({ error: "internal_error", message: "فشل إرسال الرسالة. حاول مرة أخرى." });
+  }
+});
+
+// GET /api/support — admin only: get all support messages
+router.get("/", requireAdmin, async (req, res) => {
+  try {
+    const messages = await db
+      .select()
+      .from(supportMessagesTable)
+      .orderBy(supportMessagesTable.createdAt);
+    res.json({ messages });
+  } catch (err) {
+    req.log.error({ err }, "Get support messages error");
+    res.status(500).json({ error: "internal_error", message: "خطأ في الخادم" });
+  }
+});
+
+// PATCH /api/support/:id/read — mark a message as read
+router.patch("/:id/read", requireAdmin, async (req, res) => {
+  try {
+    const [updated] = await db
+      .update(supportMessagesTable)
+      .set({ isRead: true })
+      .where(eq(supportMessagesTable.id, Number(req.params.id)))
+      .returning();
+    res.json({ message: updated });
+  } catch (err) {
+    req.log.error({ err }, "Mark support message read error");
+    res.status(500).json({ error: "internal_error", message: "خطأ في الخادم" });
   }
 });
 

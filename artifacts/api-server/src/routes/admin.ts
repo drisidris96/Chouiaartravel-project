@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, bookingsTable, tripsTable, visaRequestsTable, reservationsTable, serviceRequestsTable } from "@workspace/db";
+import { db, bookingsTable, tripsTable, visaRequestsTable, reservationsTable, serviceRequestsTable, supportMessagesTable } from "@workspace/db";
 import { eq, count, sum, desc } from "drizzle-orm";
 import { requireAdmin } from "../middleware/requireAdmin";
 
@@ -82,10 +82,23 @@ router.get("/notifications", requireAdmin, async (req, res) => {
       notifications.push({
         id: `service-${s.id}`,
         type: "service",
-        title: `طلب خدمة — ${s.serviceType}`,
+        title: `طلب خدمة أخرى`,
         desc: `${s.firstName} ${s.lastName} — ${s.phone}`,
         time: s.createdAt,
         read: false,
+      });
+    }
+
+    const supports = await db.select().from(supportMessagesTable).orderBy(desc(supportMessagesTable.createdAt)).limit(15);
+    for (const m of supports) {
+      notifications.push({
+        id: `support-${m.id}`,
+        type: "support",
+        title: `رسالة دعم — ${m.name}`,
+        desc: m.message.length > 60 ? m.message.slice(0, 60) + "..." : m.message,
+        time: m.createdAt,
+        read: m.isRead,
+        dbId: m.id,
       });
     }
 
