@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Phone, MessageCircle, Mail, Facebook, HelpCircle, Send,
   CheckCircle, ArrowRight, Clock, Shield, Headphones,
+  Paperclip, X, FileText, Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +75,17 @@ const faqs = [
   },
 ];
 
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
+interface AttachmentFile {
+  name: string;
+  type: string;
+  size: number;
+  data: string;
+}
+
 export default function Support() {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -82,8 +94,55 @@ export default function Support() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const inp = "w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors text-sm";
+
+  const processFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    const remaining = MAX_FILES - attachments.length;
+    if (remaining <= 0) {
+      toast({ variant: "destructive", title: `الحد الأقصى ${MAX_FILES} ملفات` });
+      return;
+    }
+    let added = 0;
+    const newAttachments: AttachmentFile[] = [];
+    const promises = arr.slice(0, remaining).map((file) => {
+      return new Promise<void>((resolve) => {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          toast({ variant: "destructive", title: `"${file.name}" — نوع غير مدعوم`, description: "يُسمح فقط بـ JPG/PNG/PDF" });
+          return resolve();
+        }
+        if (file.size > MAX_FILE_BYTES) {
+          toast({ variant: "destructive", title: `"${file.name}" — الحجم يتجاوز 5MB` });
+          return resolve();
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = (e.target?.result as string).split(",")[1];
+          newAttachments.push({ name: file.name, type: file.type, size: file.size, data });
+          added++;
+          resolve();
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    Promise.all(promises).then(() => {
+      if (added > 0) setAttachments((prev) => [...prev, ...newAttachments]);
+    });
+  };
+
+  const removeAttachment = (idx: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    processFiles(e.dataTransfer.files);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,17 +155,27 @@ export default function Support() {
       const res = await fetch(`${API}/support`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          attachments: attachments.map(({ name, type, data }) => ({ name, type, data })),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       setSent(true);
       setForm({ name: "", phone: "", email: "", message: "" });
+      setAttachments([]);
     } catch (err: any) {
       toast({ variant: "destructive", title: "فشل الإرسال", description: err.message });
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
@@ -282,13 +351,80 @@ export default function Support() {
                     <label className="block text-xs font-semibold mb-1.5">رسالتك *</label>
                     <textarea
                       required
-                      rows={5}
+                      rows={4}
                       value={form.message}
                       onChange={(e) => setForm({ ...form, message: e.target.value })}
                       placeholder="اكتب رسالتك أو استفسارك هنا..."
                       className={`${inp} resize-none`}
                     />
                   </div>
+
+                  {/* File upload zone */}
+                  <div>
+                    <label className="block text-xs font-semibold mb-1.5 flex items-center gap-1">
+                      <Paperclip className="w-3.5 h-3.5" />
+                      المرفقات (اختياري)
+                      <span className="text-muted-foreground font-normal">حتى {MAX_FILES} ملفات • JPG/PNG/PDF • 5MB لكل ملف</span>
+                    </label>
+
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                      onDragLeave={() => setDragging(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-200 ${
+                        dragging
+                          ? "border-primary bg-primary/5 scale-[1.01]"
+                          : "border-border/60 hover:border-primary/50 hover:bg-muted/30"
+                      }`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept=".jpg,.jpeg,.png,.pdf"
+                        className="hidden"
+                        onChange={(e) => e.target.files && processFiles(e.target.files)}
+                      />
+                      <Paperclip className="w-5 h-5 text-muted-foreground mx-auto mb-1.5" />
+                      <p className="text-xs text-muted-foreground">
+                        اسحب الملفات هنا أو <span className="text-primary font-semibold">اضغط للاختيار</span>
+                      </p>
+                      {attachments.length >= MAX_FILES && (
+                        <p className="text-xs text-amber-600 mt-1">وصلت للحد الأقصى ({MAX_FILES} ملفات)</p>
+                      )}
+                    </div>
+
+                    {/* Attached files list */}
+                    {attachments.length > 0 && (
+                      <div className="mt-2 space-y-1.5">
+                        {attachments.map((file, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 text-xs"
+                          >
+                            {file.type === "application/pdf" ? (
+                              <FileText className="w-4 h-4 text-red-500 flex-shrink-0" />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            )}
+                            <span className="flex-1 truncate font-medium">{file.name}</span>
+                            <span className="text-muted-foreground flex-shrink-0">{formatSize(file.size)}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeAttachment(idx)}
+                              className="text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <Button type="submit" className="w-full h-12 rounded-xl font-bold gap-2" disabled={loading}>
                     <Send className="w-4 h-4" />
                     {loading ? "جاري الإرسال..." : "إرسال الرسالة"}

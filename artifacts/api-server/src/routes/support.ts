@@ -6,13 +6,39 @@ import { requireAdmin } from "../middleware/requireAdmin";
 
 const router: IRouter = Router();
 
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
 // POST /api/support — public: submit a support message
 router.post("/", async (req, res) => {
   try {
-    const { name, phone, email, message } = req.body;
+    const { name, phone, email, message, attachments } = req.body;
     if (!name || !message || (!phone && !email)) {
       res.status(400).json({ error: "bad_request", message: "الاسم والرسالة مطلوبان مع وسيلة تواصل" });
       return;
+    }
+
+    // Validate attachments
+    let validatedAttachments: { name: string; type: string; data: string }[] = [];
+    if (attachments && Array.isArray(attachments)) {
+      if (attachments.length > MAX_FILES) {
+        res.status(400).json({ error: "too_many_files", message: `الحد الأقصى ${MAX_FILES} ملفات` });
+        return;
+      }
+      for (const file of attachments) {
+        if (!file.name || !file.type || !file.data) continue;
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          res.status(400).json({ error: "invalid_type", message: "يُسمح فقط بصور JPG/PNG وملفات PDF" });
+          return;
+        }
+        const sizeBytes = Buffer.byteLength(file.data, "base64");
+        if (sizeBytes > MAX_FILE_BYTES) {
+          res.status(400).json({ error: "file_too_large", message: `الملف "${file.name}" يتجاوز 5MB` });
+          return;
+        }
+        validatedAttachments.push({ name: file.name, type: file.type, data: file.data });
+      }
     }
 
     // Save to database
@@ -21,9 +47,19 @@ router.post("/", async (req, res) => {
       phone: phone || null,
       email: email || null,
       message,
+      attachments: validatedAttachments.length > 0 ? validatedAttachments : [],
     });
 
-    // Also send email notification to admin
+    // Build attachment summary for email
+    const attachmentHtml = validatedAttachments.length > 0
+      ? `<tr>
+          <td style="padding: 10px 0; color: #6b7280; font-size: 13px; vertical-align: top;">المرفقات</td>
+          <td style="padding: 10px 0; color: #111827;">
+            ${validatedAttachments.map(f => `<span style="display:inline-block;background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 8px;font-size:12px;margin:2px;">📎 ${f.name}</span>`).join(" ")}
+          </td>
+        </tr>`
+      : "";
+
     const htmlBody = `
       <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #1a3a5c, #2a5298); padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
@@ -45,10 +81,12 @@ router.post("/", async (req, res) => {
               <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;" dir="ltr">${email}</td>
             </tr>` : ""}
             <tr>
-              <td style="padding: 10px 0; color: #6b7280; font-size: 13px; vertical-align: top;">الرسالة</td>
-              <td style="padding: 10px 0; color: #111827; line-height: 1.7;">${message.replace(/\n/g, "<br>")}</td>
+              <td style="padding: 10px 0; color: #6b7280; font-size: 13px; vertical-align: top; border-bottom: 1px solid #e5e7eb;">الرسالة</td>
+              <td style="padding: 10px 0; color: #111827; line-height: 1.7; border-bottom: 1px solid #e5e7eb;">${message.replace(/\n/g, "<br>")}</td>
             </tr>
+            ${attachmentHtml}
           </table>
+          ${validatedAttachments.length > 0 ? `<p style="margin-top:16px;color:#6b7280;font-size:12px;">⚠️ تحتوي الرسالة على ${validatedAttachments.length} مرفق، راجع لوحة الأدمين لتنزيلها.</p>` : ""}
         </div>
         <div style="background: #e0f2fe; padding: 14px 28px; border: 1px solid #bae6fd; border-top: none; border-radius: 0 0 12px 12px; font-size: 12px; color: #0369a1; text-align: center;">
           يُرجى الرد في أقرب وقت ممكن على العميل — وكالة شويعر للسياحة والأسفار
@@ -58,7 +96,7 @@ router.post("/", async (req, res) => {
 
     await sendMail({
       to: "chouiaartravelagency@gmail.com",
-      subject: `📩 دعم جديد من: ${name}`,
+      subject: `📩 دعم جديد من: ${name}${validatedAttachments.length > 0 ? ` (${validatedAttachments.length} مرفق)` : ""}`,
       html: htmlBody,
     });
 
