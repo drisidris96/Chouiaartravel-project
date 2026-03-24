@@ -141,3 +141,25 @@ export async function sendPasswordResetEmail(toEmail: string, code: string): Pro
     return false;
   }
 }
+
+export async function sendMail({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
+  const transport = createTransport();
+  if (!transport) {
+    logger.warn({ to }, "Email not sent (no credentials configured)");
+    return false;
+  }
+  try {
+    await transport.sendMail({
+      from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+      replyTo: SENDER_EMAIL,
+      to,
+      subject,
+      html,
+    });
+    logger.info({ to, subject }, "Email sent");
+    return true;
+  } catch (err) {
+    logger.error({ err, to }, "Failed to send email");
+    return false;
+  }
+}

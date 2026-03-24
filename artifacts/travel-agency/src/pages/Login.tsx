@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LockKeyhole, UserPlus, KeyRound, CheckCircle, Eye, EyeOff, ShieldCheck, Mail } from "lucide-react";
+import { LockKeyhole, UserPlus, KeyRound, CheckCircle, Eye, EyeOff, ShieldCheck, Mail, Headphones } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/i18n/LanguageContext";
 
@@ -575,6 +575,22 @@ export default function Login() {
           )}
         </CardContent>
       </Card>
+
+      {/* Support link below the card */}
+      <div className="relative z-10 mt-5 text-center">
+        <button
+          onClick={() => setLocation("/support")}
+          className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-border/50 rounded-2xl px-5 py-3 shadow-md hover:shadow-lg hover:bg-white transition-all duration-200 group"
+        >
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <Headphones className="w-4 h-4 text-primary" />
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-bold text-foreground">تحتاج مساعدة؟</p>
+            <p className="text-xs text-muted-foreground">تواصل مع الدعم والمساعدة</p>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }
