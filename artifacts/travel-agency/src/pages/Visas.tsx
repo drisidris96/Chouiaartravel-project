@@ -215,16 +215,13 @@ export default function Visas() {
     if (!selectedCountry) return;
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => { if (v) formData.append(k, v); });
-      formData.append("destination", selectedCountry.name);
-      if (photo) formData.append("photo", photo);
-      if (passportPhoto) formData.append("passportPhoto", passportPhoto);
+      const payload = { ...form, destination: selectedCountry.name };
 
       const res = await fetch(`${BASE}/visa-requests`, {
         method: "POST",
         credentials: "include",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);

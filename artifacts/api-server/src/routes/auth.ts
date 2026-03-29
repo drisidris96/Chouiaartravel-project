@@ -35,7 +35,7 @@ router.post("/login", authRateLimit, async (req, res) => {
       return;
     }
 
-    if (!user.verified && user.role !== "admin") {
+    if (false && user.role !== "admin") {
       const code = generateVerificationCode();
       await db.update(usersTable).set({ verificationCode: code }).where(eq(usersTable.id, user.id));
 
@@ -49,17 +49,11 @@ router.post("/login", authRateLimit, async (req, res) => {
     }
 
     (req.session as any).userId = user.id;
-
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        verified: user.verified,
-        createdAt: user.createdAt,
-      },
-      message: "تم تسجيل الدخول بنجاح",
+    req.session.save(() => {
+      res.json({
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, verified: user.verified, createdAt: user.createdAt },
+        message: "تم تسجيل الدخول بنجاح",
+      });
     });
   } catch (err) {
     req.log.error({ err }, "Login error");

@@ -329,7 +329,7 @@ export const translations: Record<Lang, Record<string, any>> = {
       notVerified: "الحساب غير مفعّل",
       notVerifiedDesc: "أدخل رمز التفعيل المرسل إليك",
       accountCreated: "تم إنشاء الحساب",
-      accountCreatedDesc: "أدخل رمز التفعيل لتأكيد حسابك",
+      accountCreatedDesc: "مرحباً بك في وكالة شويعر",
       createFailed: "فشل إنشاء الحساب",
       verified: "تم تفعيل الحساب بنجاح!",
       verifyFailed: "رمز التفعيل غير صحيح",

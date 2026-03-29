@@ -111,4 +111,18 @@ router.get("/notifications", requireAdmin, async (req, res) => {
   }
 });
 
+
+router.get("/pending-counts", requireAdmin, async (req, res) => {
+  try {
+    const [reservations] = await db.select({ count: count() }).from(reservationsTable).where(eq(reservationsTable.status, "pending"));
+    const [visas] = await db.select({ count: count() }).from(visaRequestsTable).where(eq(visaRequestsTable.status, "pending"));
+    const [services] = await db.select({ count: count() }).from(serviceRequestsTable).where(eq(serviceRequestsTable.status, "pending"));
+    const [bookings] = await db.select({ count: count() }).from(bookingsTable).where(eq(bookingsTable.status, "pending"));
+    res.json({ reservations: reservations.count, visas: visas.count, services: services.count, bookings: bookings.count });
+  } catch (err) {
+    req.log.error({ err }, "Get pending counts error");
+    res.status(500).json({ error: "internal_error", message: "Internal server error" });
+  }
+});
+
 export default router;

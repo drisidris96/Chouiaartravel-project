@@ -168,16 +168,13 @@ export default function VisasRegular() {
     if (!selectedCountry) return;
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      Object.entries(form).forEach(([k, v]) => { if (v) formData.append(k, v); });
-      formData.append("destination", selectedCountry.name);
-      formData.append("visaCategory", "regular");
-      if (photo) formData.append("photo", photo);
-      if (passportScan) formData.append("passportPhoto", passportScan);
-      extraFiles.forEach((f, i) => formData.append(`extraFile_${i}`, f));
+      const payload = { ...form, destination: selectedCountry.name, visaCategory: "regular" };
 
       const res = await fetch(`${BASE}/visa-requests`, {
-        method: "POST", credentials: "include", body: formData,
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
